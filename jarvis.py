@@ -325,9 +325,9 @@ def astro(start_date, end_date):
         for body in neo.get(str(start_date), []):
             asteroid_id = body['id']
             asteroid_name = body['name']
-            asteroid_magnitude = body['absolute_magnitude_h']
-            print(asteroid_id, asteroid_name, asteroid_magnitude)
-            speak(f"Asteroid {name} with id {id_val} has an absolute magnitude of {absolute}.")
+            asteroid_magn = body['absolute_magnitude_h']
+            print(asteroid_id, asteroid_name, asteroid_magn)
+            speak(f"Asteroid {asteroid_name} with id {asteroid_id} has an absolute magnitude of {asteroid_magn}.")
     except Exception as e:
         print(f"Error fetching asteroid data: {e}")
         speak("Sorry, I couldn't fetch the asteroid data.")
