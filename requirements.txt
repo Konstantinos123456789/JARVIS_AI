@@ -19,7 +19,7 @@ torch==2.8.0
 scikit-learn==1.5.0
 
 # Web & API
-requests==2.32.2
+requests==2.32.4
 beautifulsoup4==4.11.1
 wikipedia==1.4.0
 
