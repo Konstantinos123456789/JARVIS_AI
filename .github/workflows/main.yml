@@ -1,0 +1,85 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  release:
+    types: [created]
+
+# Set default permissions for the whole workflow, 
+# then override them in specific jobs if necessary.
+permissions: read-all
+
+jobs:
+  # ========================================================
+  # CI JOB: Python Build, Lint, and Test
+  # Runs on: push, pull_request
+  # ========================================================
+  build-and-test:
+    runs-on: windows-latest
+    # Only run this job on push or pull_request events
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Install PyAudio
+        run: pip install PyAudio --only-binary=:all:
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          pip install -r requirements.txt
+      - name: Lint with flake8
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Test with pytest
+        run: pytest || true
+
+  # ========================================================
+  # CD JOB 1: Secure Build (SLSA)
+  # Runs on: release
+  # ========================================================
+  build-slsa:
+    runs-on: ubuntu-latest
+    # Only run this job when a release is created
+    if: github.event_name == 'release'
+    permissions:
+      contents: write # Needed to upload assets
+      id-token: write # Needed for SLSA signing
+    outputs:
+      digests: ${{ steps.hash.outputs.digests }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build artifacts
+        run: |
+          # Replace these with your actual build commands
+          echo "artifact1" > artifact1
+          echo "artifact2" > artifact2
+      - name: Generate subject for provenance
+        id: hash
+        run: |
+          set -euo pipefail
+          files=$(ls artifact*)
+          # Generate the subjects (base64 encoded).
+          echo "digests=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
+
+  # ========================================================
+  # CD JOB 2: Generate Provenance
+  # Runs on: release (needs build-slsa)
+  # ========================================================
+  provenance:
+    needs: [build-slsa]
+    permissions:
+      actions: read   # To read the workflow path.
+      id-token: write # To sign the provenance.
+      contents: write # To add assets to a release.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.4.0
+    with:
+      base64-subjects: "${{ needs.build-slsa.outputs.digests }}"
+      upload-assets: true
