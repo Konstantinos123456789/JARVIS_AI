@@ -261,8 +261,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 This is a personal project created for educational purposes. Use responsibly and at your own risk. The stock recommendation feature is for informational purposes only and should not be considered financial advice.
 
-## Contact
 
-Your Name - [@yourhandle](https://twitter.com/yourhandle)
-
-Project Link: [https://github.com/yourusername/jarvis-ai](https://github.com/yourusername/jarvis-ai)
+Project Link: [https://github.com/Konstantinos123456789/JARVIS_AI](https://github.com/Konstantinos123456789/JARVIS_AI)
