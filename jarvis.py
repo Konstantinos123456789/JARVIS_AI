@@ -326,7 +326,6 @@ def astro(start_date, end_date):
             asteroid_id = body['id']
             asteroid_name = body['name']
             asteroid_magn = body['absolute_magnitude_h']
-            print(asteroid_id, asteroid_name, asteroid_magn)
             speak(f"Asteroid {asteroid_name} with id {asteroid_id} has an absolute magnitude of {asteroid_magn}.")
     except Exception as e:
         print(f"Error fetching asteroid data: {e}")
