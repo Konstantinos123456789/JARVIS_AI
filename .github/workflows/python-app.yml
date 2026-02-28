@@ -21,16 +21,9 @@ jobs:
         python-version: "3.10"
 
     - name: Install PyAudio (Windows)
-      shell: pwsh
       run: |
         pip install --upgrade pip
-        pip install wheel
-        $whl = "https://files.pythonhosted.org/packages/cp310/P/PyAudio/PyAudio-0.2.14-cp310-cp310-win_amd64.whl"
-        pip install $whl
-        if ($LASTEXITCODE -ne 0) {
-          choco install -y portaudio
-          pip install pyaudio
-        }
+        pip install https://files.pythonhosted.org/packages/27/bc/719d140ee63cf4b0725016531d36743a797ffdbab85e8536922902c9349a/PyAudio-0.2.14-cp310-cp310-win_amd64.whl
 
     - name: Install dependencies
       run: |
