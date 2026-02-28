@@ -18,16 +18,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Install Python dependencies
-        shell: pwsh
+          python-version: '3.10'
+      - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          # Install PyAudio via prebuilt wheel before requirements.txt
+          pip install --upgrade pip wheel setuptools
           pip install PyAudio --only-binary=:all:
-          # Install everything else, skipping PyAudio since it's already installed
-          (Get-Content requirements.txt) | Where-Object { $_ -notmatch '(?i)pyaudio' } | Set-Content requirements_filtered.txt
-          pip install -r requirements_filtered.txt
+          pip install -r requirements.txt --only-binary=PyAudio
       - name: Build artifacts
         run: |
           python setup.py sdist bdist_wheel
@@ -49,7 +45,7 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
       base64-subjects: "${{ needs.build.outputs.digests }}"
       upload-assets: true
