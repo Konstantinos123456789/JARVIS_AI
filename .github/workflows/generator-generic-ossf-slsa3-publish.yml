@@ -25,30 +25,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ========================================================
-      #
-      # Step 1: Install system dependencies for PyAudio
-      #
-      # ========================================================
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      # ========================================================
+      # Step 1: Install PyAudio
+      # pipwin is skipped in favor of direct pip install which
+      # works reliably on windows-latest with Python 3.11
+      # ========================================================
       - name: Install PyAudio (Windows)
         run: |
           pip install --upgrade pip
-          pip install pipwin
-          pipwin refresh
-          pipwin install pyaudio || pip install pyaudio
+          pip install pyaudio
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
       # ========================================================
-      #
       # Step 2: Build your artifacts.
-      #
       # ========================================================
       - name: Build artifacts
         run: |
@@ -56,9 +52,7 @@ jobs:
           echo "artifact2" > artifact2
 
       # ========================================================
-      #
       # Step 3: Generate the provenance subjects (Windows-compatible)
-      #
       # ========================================================
       - name: Generate subject for provenance
         id: hash
@@ -76,9 +70,9 @@ jobs:
   provenance:
     needs: [build]
     permissions:
-      actions: read   # To read the workflow path.
-      id-token: write # To sign the provenance.
-      contents: write # To add assets to a release.
+      actions: read
+      id-token: write
+      contents: write
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
       base64-subjects: "${{ needs.build.outputs.digests }}"
