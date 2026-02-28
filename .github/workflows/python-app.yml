@@ -15,17 +15,16 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.10"
-    - name: Install PyAudio from prebuilt wheel
+    - name: Install dependencies
       shell: pwsh
       run: |
         pip install --upgrade pip
-        $url = "https://files.pythonhosted.org/packages/cp310/P/PyAudio/PyAudio-0.2.14-cp310-cp310-win_amd64.whl"
-        pip install PyAudio --only-binary=:all: || `
-        pip install https://github.com/s3rvac/fit-but-pyaudio-wheel/releases/download/v0.2.14/PyAudio-0.2.14-cp310-cp310-win_amd64.whl
-    - name: Install dependencies
-      run: |
+        # Install PyAudio via prebuilt wheel before requirements.txt
+        pip install PyAudio --only-binary=:all:
+        # Install everything else, skipping PyAudio since it's already installed
         pip install flake8 pytest
-        pip install -r requirements.txt
+        (Get-Content requirements.txt) | Where-Object { $_ -notmatch '(?i)pyaudio' } | Set-Content requirements_filtered.txt
+        pip install -r requirements_filtered.txt
     - name: Lint with flake8
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
