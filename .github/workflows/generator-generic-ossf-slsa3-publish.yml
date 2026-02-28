@@ -30,11 +30,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install PyAudio (Windows)
+      - name: Install PyAudio from prebuilt wheel
+        shell: pwsh
         run: |
           pip install --upgrade pip
-          pip install pipwin
-          pipwin install pyaudio || pip install pyaudio
+          pip install PyAudio --only-binary=:all: || `
+          pip install https://github.com/s3rvac/fit-but-pyaudio-wheel/releases/download/v0.2.14/PyAudio-0.2.14-cp311-cp311-win_amd64.whl
       - name: Install Python dependencies
         run: pip install -r requirements.txt
       # ========================================================
