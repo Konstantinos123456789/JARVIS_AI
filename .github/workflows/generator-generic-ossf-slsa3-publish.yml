@@ -8,7 +8,6 @@
 # https://github.com/slsa-framework/slsa-github-generator.
 # The provenance file can be verified using https://github.com/slsa-framework/slsa-verifier.
 # For more information about SLSA and how it improves the supply-chain, visit slsa.dev.
-
 name: SLSA generic generator
 
 on:
@@ -38,8 +37,10 @@ jobs:
 
       - name: Install PyAudio (Windows)
         run: |
+          pip install --upgrade pip
           pip install pipwin
-          pipwin install pyaudio
+          pipwin refresh
+          pipwin install pyaudio || pip install pyaudio
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
