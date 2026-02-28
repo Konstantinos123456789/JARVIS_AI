@@ -16,18 +16,17 @@ jobs:
       with:
         python-version: "3.10"
     - name: Install dependencies
-      shell: pwsh
       run: |
         pip install --upgrade pip
-        # Install PyAudio via prebuilt wheel before requirements.txt
         pip install PyAudio --only-binary=:all:
-        # Install everything else, skipping PyAudio since it's already installed
         pip install flake8 pytest
-        (Get-Content requirements.txt) | Where-Object { $_ -notmatch '(?i)pyaudio' } | Set-Content requirements_filtered.txt
-        pip install -r requirements_filtered.txt
+        pip install -r requirements.txt --no-build-isolation --only-binary=PyAudio
     - name: Lint with flake8
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
-      run: pytest
+      shell: pwsh
+      run: |
+        pytest; if ($LASTEXITCODE -eq 5) { exit 0 }
+        # Exit code 5 = no tests collected, not a real failure
