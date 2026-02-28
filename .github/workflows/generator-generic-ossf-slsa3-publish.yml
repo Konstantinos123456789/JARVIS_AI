@@ -30,15 +30,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install PortAudio and PyAudio (Windows)
-        shell: pwsh
+      - name: Install PyAudio (Windows)
         run: |
-          choco install portaudio -y
           pip install --upgrade pip
-          pip install --global-option="build_ext" --global-option="-IC:\ProgramData\chocolatey\lib\portaudio\tools\portaudio\include" --global-option="-LC:\ProgramData\chocolatey\lib\portaudio\tools\portaudio\build\msvc\x64\Release" pyaudio
+          pip install PyAudio==0.2.14 --prefer-binary
 
       - name: Install Python dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt --prefer-binary
 
       - name: Build artifacts
         run: |
