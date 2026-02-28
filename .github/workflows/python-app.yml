@@ -20,10 +20,12 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Install PyAudio (Windows)
+    - name: Install PortAudio and PyAudio (Windows)
+      shell: pwsh
       run: |
+        choco install portaudio -y
         pip install --upgrade pip
-        pip install https://files.pythonhosted.org/packages/27/bc/719d140ee63cf4b0725016531d36743a797ffdbab85e8536922902c9349a/PyAudio-0.2.14-cp310-cp310-win_amd64.whl
+        pip install --global-option="build_ext" --global-option="-IC:\ProgramData\chocolatey\lib\portaudio\tools\portaudio\include" --global-option="-LC:\ProgramData\chocolatey\lib\portaudio\tools\portaudio\build\msvc\x64\Release" pyaudio
 
     - name: Install dependencies
       run: |
