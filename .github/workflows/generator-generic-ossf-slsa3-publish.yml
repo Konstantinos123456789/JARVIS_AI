@@ -30,15 +30,17 @@ jobs:
         with:
           python-version: '3.11'
 
-      # ========================================================
-      # Step 1: Install PyAudio
-      # pipwin is skipped in favor of direct pip install which
-      # works reliably on windows-latest with Python 3.11
-      # ========================================================
       - name: Install PyAudio (Windows)
+        shell: pwsh
         run: |
           pip install --upgrade pip
-          pip install pyaudio
+          pip install wheel
+          $whl = "https://files.pythonhosted.org/packages/cp311/P/PyAudio/PyAudio-0.2.14-cp311-cp311-win_amd64.whl"
+          pip install $whl
+          if ($LASTEXITCODE -ne 0) {
+            choco install -y portaudio
+            pip install pyaudio
+          }
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
