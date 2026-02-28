@@ -8,16 +8,12 @@
 # https://github.com/slsa-framework/slsa-github-generator.
 # The provenance file can be verified using https://github.com/slsa-framework/slsa-verifier.
 # For more information about SLSA and how it improves the supply-chain, visit slsa.dev.
-
 name: SLSA generic generator
-
 on:
   workflow_dispatch:
   release:
     types: [created]
-
 permissions: read-all
-
 jobs:
   build:
     runs-on: windows-latest
@@ -25,7 +21,6 @@ jobs:
       digests: ${{ steps.hash.outputs.hashes }}
     steps:
       - uses: actions/checkout@v4
-
       # ========================================================
       #
       # Step 1: Install system dependencies for PyAudio
@@ -35,15 +30,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install PyAudio (Windows)
         run: |
+          pip install --upgrade pip
           pip install pipwin
-          pipwin install pyaudio
-
+          pipwin install pyaudio || pip install pyaudio
       - name: Install Python dependencies
         run: pip install -r requirements.txt
-
       # ========================================================
       #
       # Step 2: Build your artifacts.
@@ -51,9 +44,7 @@ jobs:
       # ========================================================
       - name: Build artifacts
         run: |
-          echo "artifact1" > artifact1
-          echo "artifact2" > artifact2
-
+          python setup.py sdist bdist_wheel
       # ========================================================
       #
       # Step 3: Generate the provenance subjects (Windows-compatible)
@@ -63,15 +54,14 @@ jobs:
         id: hash
         shell: pwsh
         run: |
-          $files = Get-ChildItem -Name "artifact*"
+          $files = Get-ChildItem -Path "dist" -File
           $hashes = ""
           foreach ($file in $files) {
-            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLower()
-            $hashes += "$hash  $file`n"
+            $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLower()
+            $hashes += "$hash  $($file.Name)`n"
           }
           $encoded = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($hashes))
           echo "hashes=$encoded" >> $env:GITHUB_OUTPUT
-
   provenance:
     needs: [build]
     permissions:
