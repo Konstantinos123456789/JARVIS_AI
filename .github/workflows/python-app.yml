@@ -15,12 +15,17 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.10"
+    - name: Fix PyAudio version in requirements.txt
+      shell: pwsh
+      run: |
+        (Get-Content requirements.txt) -replace '(?i)pyaudio==[\d.]+', 'PyAudio==0.2.14' | Set-Content requirements.txt
     - name: Install dependencies
       run: |
         pip install --upgrade pip
+        pip install wheel setuptools --upgrade
         pip install PyAudio --only-binary=:all:
         pip install flake8 pytest
-        pip install -r requirements.txt --no-build-isolation --only-binary=PyAudio
+        pip install -r requirements.txt --only-binary=PyAudio
     - name: Lint with flake8
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -29,4 +34,3 @@ jobs:
       shell: pwsh
       run: |
         pytest; if ($LASTEXITCODE -eq 5) { exit 0 }
-        # Exit code 5 = no tests collected, not a real failure
