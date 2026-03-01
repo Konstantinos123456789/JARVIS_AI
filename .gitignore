@@ -158,7 +158,7 @@ data.txt
 # API Keys & Secrets
 *.key
 secrets.py
-config.py
+
 
 # Model files (large files)
 *.h5

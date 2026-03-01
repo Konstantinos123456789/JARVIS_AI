@@ -124,6 +124,7 @@ def greet_user():
         hour = datetime.now().hour
         greeting = "Good Morning" if 6 <= hour < 12 else "Good Afternoon" if 12 <= hour < 16 else "Good Evening"
         speak(f"{greeting} {USERNAME}. I am {BOTNAME}. How may I assist you?")
+        print(f"{greeting} {USERNAME}. I am {BOTNAME}. How may I assist you?")
         
         if ret:
             face_detector = FaceDetector()

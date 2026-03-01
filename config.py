@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Personal Information
-USERNAME = os.getenv("USERNAME", "YOUR_NAME")
+USERNAME = os.getenv("Jarvis_USERNAME", "YOUR_NAME")
 BOTNAME = os.getenv("BOTNAME", "Jarvis")
 
 # API Keys - CHANGE THESE!
