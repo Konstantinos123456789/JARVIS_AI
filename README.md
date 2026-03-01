@@ -205,8 +205,6 @@ JARVIS_AI/
     ├── Screenshots/
     ├── Notepad/
     ├── StockData/
-    ├── MovieLens/
-    │   └── ml-latest-small/
     └── NASA/
         └── Images/
 ```
