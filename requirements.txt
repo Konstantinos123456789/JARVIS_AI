@@ -24,7 +24,7 @@ beautifulsoup4==4.11.1
 wikipedia==1.4.0
 
 # Finance
-yfinance==0.2.37
+
 schedule==1.2.2
 
 # Automation & System
