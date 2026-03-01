@@ -99,13 +99,6 @@ Edit `knowledge.py` and replace placeholders:
 - `YOUR_LOCATION` - Your city
 - `YOUR_COUNTRY` - Your country
 
-### 8. MovieLens Dataset (for movie recommendations)
-
-Download the MovieLens small dataset from https://grouplens.org/datasets/movielens/latest/ and extract it to:
-```
-Database/MovieLens/ml-latest-small/
-```
-
 ## Usage
 
 ### Starting Jarvis
