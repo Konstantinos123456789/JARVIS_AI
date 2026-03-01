@@ -8,6 +8,8 @@ import knowledge
 import torch 
 from transformers import BertTokenizer, BertModel
 import cv2
+import platform
+OS = platform.system()  # Windows, Linux, Darwin
 import numpy as np
 from stock import generate_recommendations
 import webbrowser
@@ -108,7 +110,12 @@ def notepad():
     
 def CloseNotepad():
     speak("Closing notepad.")
-    os.system("taskkill /f /im notepad.exe")
+    if OS == 'Windows':
+        os.system('taskkill /f /im notepad.exe')
+    elif OS == 'Darwin':
+        os.system('pkill -x TextEdit')
+    else:
+        os.system('pkill gedit')
     
 
 def date():
@@ -394,7 +401,12 @@ def main():
             webbrowser.open("https://github.com")            
         elif 'shutdown' in query:
             speak("Shutting down the system. Goodbye!")
-            os.system("shutdown /s /t 1")
+            if OS == 'Windows':
+                os.system('shutdown /s /t 1')
+            elif OS == 'Darwin':
+                os.system('sudo shutdown -h now')
+            else:
+                os.system('shutdown -h now')
         elif 'cpu' in query:
             cpu()
             continue
@@ -522,4 +534,3 @@ def main():
 if __name__ == '__main__':
     startup()
     main()
-       

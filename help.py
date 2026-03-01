@@ -2,16 +2,36 @@ import pyautogui
 import pyttsx3
 import psutil
 import os
+import platform
+import subprocess
 import speech_recognition as sr
 import pywhatkit
 import wikipedia
 import requests
 
-engine = pyttsx3.init('sapi5')
-engine.setProperty('rate', 190)
-engine.setProperty('volume', 1.0)
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id if len(voices) > 1 else voices[0].id)
+# ── Platform detection ────────────────────────────────────────────────────────
+OS = platform.system()  # 'Windows', 'Linux', 'Darwin'
+
+# ── TTS Engine ────────────────────────────────────────────────────────────────
+def _init_tts_engine():
+    """Initialize pyttsx3 with the correct backend for each platform"""
+    try:
+        if OS == 'Windows':
+            engine = pyttsx3.init('sapi5')
+        elif OS == 'Darwin':
+            engine = pyttsx3.init('nsss')   # macOS native
+        else:
+            engine = pyttsx3.init('espeak') # Linux
+        engine.setProperty('rate', 190)
+        engine.setProperty('volume', 1.0)
+        voices = engine.getProperty('voices')
+        engine.setProperty('voice', voices[1].id if len(voices) > 1 else voices[0].id)
+        return engine
+    except Exception as e:
+        print(f"TTS init error: {e}")
+        return pyttsx3.init()  # fallback to default
+
+engine = _init_tts_engine()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Takes Input from User
@@ -81,39 +101,59 @@ def screenshot() -> None:
 
 
 def open_calculator():
-    """Opens the Windows calculator application"""
+    """Opens the calculator application (cross-platform)"""
     try:
-        os.system('calc')
+        if OS == 'Windows':
+            os.system('calc')
+        elif OS == 'Darwin':
+            subprocess.Popen(['open', '-a', 'Calculator'])
+        else:
+            subprocess.Popen(['gnome-calculator'])
         speak("Opening calculator")
     except Exception as e:
         speak("Sorry, I couldn't open the calculator")
         print(f"Error: {e}")
 
 def open_camera():
-    """Opens the default camera application"""
+    """Opens the default camera application (cross-platform)"""
     try:
-        os.system('start microsoft.windows.camera:')
+        if OS == 'Windows':
+            os.system('start microsoft.windows.camera:')
+        elif OS == 'Darwin':
+            subprocess.Popen(['open', '-a', 'FaceTime'])
+        else:
+            subprocess.Popen(['cheese'])
         speak("Opening camera")
     except Exception as e:
         speak("Sorry, I couldn't open the camera")
         print(f"Error: {e}")
 
 def open_cmd():
-    """Opens Windows Command Prompt"""
+    """Opens a terminal (cross-platform)"""
     try:
-        os.system('start cmd')
-        speak("Opening command prompt")
+        if OS == 'Windows':
+            os.system('start cmd')
+        elif OS == 'Darwin':
+            subprocess.Popen(['open', '-a', 'Terminal'])
+        else:
+            subprocess.Popen(['gnome-terminal'])
+        speak("Opening terminal")
     except Exception as e:
-        speak("Sorry, I couldn't open command prompt")
+        speak("Sorry, I couldn't open the terminal")
         print(f"Error: {e}")
 
 def open_notepad():
-    """Opens Windows Notepad"""
+    """Opens a text editor (cross-platform)"""
     try:
-        os.system('notepad')
-        speak("Opening notepad")
+        if OS == 'Windows':
+            os.system('notepad')
+        elif OS == 'Darwin':
+            subprocess.Popen(['open', '-a', 'TextEdit'])
+        else:
+            subprocess.Popen(['gedit'])
+        speak("Opening text editor")
     except Exception as e:
-        speak("Sorry, I couldn't open notepad")
+        speak("Sorry, I couldn't open the text editor")
         print(f"Error: {e}")
 
 def play_on_youtube(video):
