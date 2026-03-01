@@ -31,12 +31,12 @@ A Python-based AI voice assistant inspired by Iron Man's JARVIS, featuring voice
 - **Webcam** - For face detection (optional)
 - **Internet Connection** - For web features and API calls
 
-#### Linux only
+#### Linux
 ```bash
 sudo apt install espeak gnome-calculator gnome-terminal gedit cheese
 ```
 
-#### macOS only
+#### macOS
 No extra installs needed — uses built-in apps (Calculator, TextEdit, Terminal, FaceTime).
 
 ## Installation
@@ -205,8 +205,6 @@ JARVIS_AI/
     ├── Screenshots/
     ├── Notepad/
     ├── StockData/
-    ├── MovieLens/
-    │   └── ml-latest-small/
     └── NASA/
         └── Images/
 ```
