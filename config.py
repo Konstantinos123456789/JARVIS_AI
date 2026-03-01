@@ -10,11 +10,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Personal Information
-USERNAME = os.getenv("Jarvis_USERNAME", "YOUR_NAME")
-BOTNAME = os.getenv("BOTNAME", "Jarvis")
+USERNAME = os.getenv("Jarvis_USERNAME")
+BOTNAME = os.getenv("BOTNAME")
 
 # API Keys - CHANGE THESE!
-NASA_API_KEY = os.getenv("NASA_API_KEY", "DEMO_KEY")  # Get your key from https://api.nasa.gov/
+NASA_API_KEY = os.getenv("NASA_API_KEY")  # Get your key from https://api.nasa.gov/
 
 # Display Settings
 SET_WIDTH = 800
