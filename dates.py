@@ -5,10 +5,7 @@ from help import speak, take_user_input
 special_days = {
     (12, 25): "Christmas",
     (1, 1): "New Year",
-    # Add your special days here, for example:
-    # (12, 23): "Anniversary",
-    # (11, 5): "Birthday",
-    # (5, 21): "Name day"
+    
 }
 
 def check_special_days():
