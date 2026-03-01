@@ -1,55 +1,44 @@
 """
 Configuration file for Jarvis AI
-IMPORTANT: Edit this file with your personal information and API keys
+Copy .env.example to .env and fill in your values.
 """
 
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Personal Information
-USERNAME = os.getenv("Jarvis_USERNAME")
-BOTNAME = os.getenv("BOTNAME")
+# Personal 
+USERNAME = os.getenv("JARVIS_USERNAME", "User")
+BOTNAME  = os.getenv("BOTNAME", "Jarvis")
 
-# API Keys - CHANGE THESE!
-NASA_API_KEY = os.getenv("NASA_API_KEY")  # Get your key from https://api.nasa.gov/
+# API Keys 
+NASA_API_KEY = os.getenv("NASA_API_KEY", "DEMO_KEY")
 
-# Display Settings
-SET_WIDTH = 800
+# Display 
+SET_WIDTH  = 800
 SET_HEIGHT = 700
 
-# Voice Settings
-VOICE_RATE = 190  # Speech rate (words per minute)
-VOICE_VOLUME = 1.0  # Volume (0.0 to 1.0)
-VOICE_INDEX = 1  # Voice selection (0 for male, 1 for female - varies by system)
+# Voice 
+VOICE_RATE   = 190
+VOICE_VOLUME = 1.0
+VOICE_INDEX  = 1
 
-# Paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_PATH = os.path.join(BASE_DIR, "Database")
+# Paths 
+BASE_DIR         = os.path.dirname(os.path.abspath(__file__))
+DATABASE_PATH    = os.path.join(BASE_DIR, "Database")
 SCREENSHOTS_PATH = os.path.join(DATABASE_PATH, "Screenshots")
-NOTEPAD_PATH = os.path.join(DATABASE_PATH, "Notepad")
+NOTEPAD_PATH     = os.path.join(DATABASE_PATH, "Notepad")
 NASA_IMAGES_PATH = os.path.join(DATABASE_PATH, "NASA", "Images")
+STOCK_DATA_PATH  = os.path.join(DATABASE_PATH, "StockData")
+MOVIELENS_PATH   = os.path.join(DATABASE_PATH, "MovieLens", "ml-latest-small")
 
-# Create directories if they don't exist
-for path in [DATABASE_PATH, SCREENSHOTS_PATH, NOTEPAD_PATH, NASA_IMAGES_PATH]:
+for path in [DATABASE_PATH, SCREENSHOTS_PATH, NOTEPAD_PATH, NASA_IMAGES_PATH, STOCK_DATA_PATH]:
     os.makedirs(path, exist_ok=True)
 
-# Stock Symbols
+# Stock Symbols 
 STOCK_SYMBOLS = [
-    'AAPL', 'GOOG', 'MSFT', 'AMZN', 
+    'AAPL', 'GOOG', 'MSFT', 'AMZN',
     'NVDA', 'TSLA', 'INTC', 'CSCO',
-    'JPM', 'BAC', 'AXP', 'KO', 'NKE'
+    'JPM',  'BAC',  'AXP',  'KO', 'NKE'
 ]
-
-# Personal Information for Knowledge Graph
-# Edit these in knowledge.py directly or here
-PERSONAL_INFO = {
-    "name": "YOUR_NAME",
-    "surname": "YOUR_SURNAME",
-    "age": "YOUR_AGE",
-    "birthday": "YOUR_BIRTHDAY",  # Format: "YYYY-MM-DD"
-    "location": "YOUR_CITY",
-    "country": "YOUR_COUNTRY"
-}
