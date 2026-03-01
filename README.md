@@ -2,10 +2,6 @@
 
 A Python-based AI voice assistant inspired by Iron Man's JARVIS, featuring voice recognition, natural language processing, computer vision, and various automation capabilities.
 
-## ⚠️ Important Notice
-
-**This project is currently Windows-only** due to dependencies on Windows-specific features (taskkill, os.startfile, etc.). Cross-platform support is planned for future versions.
-
 ## Features
 
 - 🎤 **Voice Recognition** - Hands-free control using speech
@@ -20,11 +16,12 @@ A Python-based AI voice assistant inspired by Iron Man's JARVIS, featuring voice
 - 🎮 **Browser Automation** - Chrome tab control
 - 🧮 **Calculator** - Voice-activated calculations
 - 💾 **Personal Knowledge Graph** - Stores and retrieves personal information
+- 🎬 **Movie Recommendations** - AI-powered movie suggestions using MovieLens data
 
 ## Prerequisites
 
 ### System Requirements
-- **OS:** Windows 10/11 (64-bit)
+- **OS:** Windows 10/11, Linux, or macOS
 - **Python:** 3.8 or higher
 - **RAM:** Minimum 8GB (16GB recommended for ML models)
 - **Storage:** 5GB free space
@@ -34,18 +31,27 @@ A Python-based AI voice assistant inspired by Iron Man's JARVIS, featuring voice
 - **Webcam** - For face detection (optional)
 - **Internet Connection** - For web features and API calls
 
+#### Linux only
+```bash
+sudo apt install espeak gnome-calculator gnome-terminal gedit cheese
+```
+
+#### macOS only
+No extra installs needed — uses built-in apps (Calculator, TextEdit, Terminal, FaceTime).
+
 ## Installation
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/jarvis-ai.git
-cd jarvis-ai
+git clone https://github.com/Konstantinos123456789/JARVIS_AI.git
+cd JARVIS_AI
 ```
 
 ### 2. Create Virtual Environment
 ```bash
 python -m venv venv
-venv\Scripts\activate  # On Windows
+venv\Scripts\activate    # Windows
+source venv/bin/activate # Linux/macOS
 ```
 
 ### 3. Install Dependencies
@@ -59,24 +65,29 @@ python -c "import nltk; nltk.download('punkt'); nltk.download('vader_lexicon')"
 ```
 
 ### 5. Create Required Directories
+
+Directories are created automatically on first run. If you prefer to create them manually:
+
 ```bash
-mkdir Database
-mkdir Database\Screenshots
-mkdir Database\Notepad
-mkdir Database\NASA
-mkdir Database\NASA\Images
+# Windows
+mkdir Database Database\Screenshots Database\Notepad Database\NASA Database\NASA\Images Database\MovieLens Database\StockData
+
+# Linux/macOS
+mkdir -p Database/Screenshots Database/Notepad Database/NASA/Images Database/MovieLens Database/StockData
 ```
 
 ### 6. Configure Environment Variables
 
 Create a `.env` file in the project root:
 ```env
-NASA_API_KEY=your_nasa_api_key_here
-USERNAME=YourName
+JARVIS_USERNAME=YourName
 BOTNAME=Jarvis
+NASA_API_KEY=your_nasa_api_key_here
 ```
 
 Get a free NASA API key from: https://api.nasa.gov/
+
+> **Note:** Use `JARVIS_USERNAME` instead of `USERNAME` — `USERNAME` is a reserved system variable on Windows and will be overridden.
 
 ### 7. Update Personal Information
 
@@ -87,6 +98,13 @@ Edit `knowledge.py` and replace placeholders:
 - `YOUR_BIRTHDAY` - Your birthday
 - `YOUR_LOCATION` - Your city
 - `YOUR_COUNTRY` - Your country
+
+### 8. MovieLens Dataset (for movie recommendations)
+
+Download the MovieLens small dataset from https://grouplens.org/datasets/movielens/latest/ and extract it to:
+```
+Database/MovieLens/ml-latest-small/
+```
 
 ## Usage
 
@@ -139,6 +157,10 @@ python jarvis.py
 **Finance:**
 - "Give me stock recommendations" (then specify your investment goals)
 
+**Movies:**
+- "Recommend me a movie"
+- "Top rated movies"
+
 **Entertainment:**
 - "Tell me a joke"
 
@@ -155,7 +177,7 @@ python jarvis.py
 ### Adjusting Voice Settings
 Edit `help.py` to change voice properties:
 ```python
-engine.setProperty('rate', 190)  # Speech rate
+engine.setProperty('rate', 190)    # Speech rate
 engine.setProperty('volume', 1.0)  # Volume (0.0 to 1.0)
 engine.setProperty('voice', voices[1].id)  # Voice selection (0 or 1)
 ```
@@ -170,7 +192,7 @@ G.add_edge("Node1", "Node2", type="relationship")
 ## Project Structure
 
 ```
-jarvis-ai/
+JARVIS_AI/
 │
 ├── jarvis.py              # Main entry point
 ├── help.py                # Helper functions (speak, take_user_input, etc.)
@@ -178,28 +200,29 @@ jarvis-ai/
 ├── data.py                # Text classification (needs data)
 ├── dates.py               # Special days tracking
 ├── stock.py               # Stock recommendation system
+├── movies.py              # Movie recommendation system
 ├── gesture_recognition.py # Face detection and gestures
 ├── utils.py               # Utility constants
+├── config.py              # App configuration (reads from .env)
+├── stocks.csv             # Stock metadata (sector, risk, dividend info)
 ├── requirements.txt       # Dependencies
-├── .env                   # Environment variables (create this)
+├── .env                   # Environment variables (create this, never commit)
+├── .env.example           # Environment variables template
 └── Database/              # Data storage (auto-created)
     ├── Screenshots/
     ├── Notepad/
+    ├── StockData/
+    ├── MovieLens/
+    │   └── ml-latest-small/
     └── NASA/
         └── Images/
 ```
 
 ## Known Issues
 
-1. **Missing Functions:** Some imported functions in `jarvis.py` are not yet implemented in `help.py`:
-   - `open_calculator()`, `open_camera()`, `open_cmd()`, `open_notepad()`
-   - `play_on_youtube()`, `search_on_google()`, `search_on_wikipedia()`, `find_my_ip()`
-
-2. **Ollama Integration:** The `talk_to_user()` function requires Ollama to be running locally (currently commented out)
-
-3. **Windows-Only:** Uses Windows-specific commands that won't work on Linux/Mac
-
-4. **Data Classification:** `data.py` needs actual training data
+1. **Ollama Integration:** The `talk_to_user()` function requires Ollama to be running locally (currently commented out)
+2. **Data Classification:** `data.py` needs actual training data
+3. **Face Detection:** May not work if Windows camera privacy settings block desktop apps — check Settings → Privacy & Security → Camera → "Allow desktop apps to access your camera"
 
 ## Troubleshooting
 
@@ -221,12 +244,19 @@ jarvis-ai/
 
 ### Face Detection Not Working
 - Check webcam permissions
-- Ensure webcam is connected and working
-- Try running as administrator
+- On Windows: Settings → Privacy & Security → Camera → enable "Allow desktop apps to access your camera"
+- On Linux: ensure your user is in the `video` group (`sudo usermod -aG video $USER`)
+
+### Stock Data Not Loading
+- yfinance is no longer used — stock data is fetched from Stooq automatically on startup
+- Ensure you have an internet connection
+
+### USERNAME Showing System Account Name
+- Make sure your `.env` uses `JARVIS_USERNAME` not `USERNAME`
+- `USERNAME` is reserved by Windows and will always be overridden
 
 ## Future Enhancements
 
-- [ ] Cross-platform compatibility (Linux, macOS)
 - [ ] Implement missing helper functions
 - [ ] Add GUI interface
 - [ ] Cloud sync for knowledge graph
@@ -256,10 +286,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Built with Python and various open-source libraries
 - NASA API for space data
 - Google Speech Recognition for voice input
+- MovieLens dataset by GroupLens Research
 
 ## Disclaimer
 
 This is a personal project created for educational purposes. Use responsibly and at your own risk. The stock recommendation feature is for informational purposes only and should not be considered financial advice.
-
 
 Project Link: [https://github.com/Konstantinos123456789/JARVIS_AI](https://github.com/Konstantinos123456789/JARVIS_AI)
