@@ -245,7 +245,6 @@ JARVIS_AI/
 ## Future Enhancements
 
 - [ ] Implement missing helper functions
-- [ ] Add GUI interface
 - [ ] Cloud sync for knowledge graph
 - [ ] Multi-language support
 - [ ] Integration with smart home devices
