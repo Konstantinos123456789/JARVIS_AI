@@ -244,10 +244,6 @@ JARVIS_AI/
 - yfinance is no longer used — stock data is fetched from Stooq automatically on startup
 - Ensure you have an internet connection
 
-### USERNAME Showing System Account Name
-- Make sure your `.env` uses `JARVIS_USERNAME` not `USERNAME`
-- `USERNAME` is reserved by Windows and will always be overridden
-
 ## Future Enhancements
 
 - [ ] Implement missing helper functions
