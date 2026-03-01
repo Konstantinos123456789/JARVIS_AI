@@ -44,3 +44,4 @@ pytube==15.0.0
 # Additional
 python-dateutil==2.8.2
 Pillow==12.1.1
+python-dotenv==1.0.1
