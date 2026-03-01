@@ -1,6 +1,7 @@
 # Jarvis AI - Personal Voice Assistant
 
 A Python-based AI voice assistant inspired by Iron Man's JARVIS, featuring voice recognition, natural language processing, computer vision, and various automation capabilities.
+
 ![Jarvis AI Screenshot](https://github.com/user-attachments/assets/dfe173ee-3868-4a48-b38e-31136505ab07)
 
 ## Features
