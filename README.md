@@ -89,7 +89,6 @@ NASA_API_KEY=your_nasa_api_key_here
 
 Get a free NASA API key from: https://api.nasa.gov/
 
-> **Note:** Use `JARVIS_USERNAME` instead of `USERNAME` — `USERNAME` is a reserved system variable on Windows and will be overridden.
 
 ### 7. Update Personal Information
 
