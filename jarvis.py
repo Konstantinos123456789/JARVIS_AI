@@ -18,10 +18,8 @@ import pyjokes
 import psutil
 import pyttsx3
 import requests
-import torch
 from PIL import Image
 from keyboard import press_and_release
-from transformers import BertModel, BertTokenizer
 
 import knowledge
 from config import BASE_DIR, BOTNAME, NASA_API_KEY, SET_WIDTH, SET_HEIGHT, USERNAME
@@ -32,18 +30,36 @@ from help import (SMALL_TALK_PHRASES, cpu, create_file, find_my_ip,
                   search_on_wikipedia, speak, startup, take_user_input)
 from stock import generate_recommendations
 
+import tkinter as tk
+from tkinter import scrolledtext
+
 # ── Platform & OpenCV ──────────────────────────────────────────────────────────
 OS = platform.system()
-cv2.setLogLevel(3)  # suppress obsensor camera probe errors
+cv2.setLogLevel(3)
 
-# ── BERT ───────────────────────────────────────────────────────────────────────
-tokenizer      = BertTokenizer.from_pretrained('bert-base-uncased')
-bert_model     = BertModel.from_pretrained('bert-base-uncased')
-EMOTION_LABELS = ['happiness', 'sadness', 'neutral']
+# ── GUI Theme ──────────────────────────────────────────────────────────────────
+BG        = "#020c14"
+PANEL     = "#041525"
+BORDER    = "#0d4f7c"
+ACCENT    = "#00c8ff"
+GREEN     = "#00ffaa"
+RED       = "#ff3860"
+TEXT      = "#c8e8f8"
+TEXT_DIM  = "#3a6a8a"
+
+FONT_TITLE = ("Courier", 11, "bold")
+FONT_MONO  = ("Courier", 10)
+FONT_SMALL = ("Courier", 8)
+FONT_LOG   = ("Courier", 9)
+
+# ── Sentinels for multi-turn follow-ups ────────────────────────────────────────
+_AWAIT_MEMORY = "__AWAIT_MEMORY__"
+_AWAIT_STOCK  = "__AWAIT_STOCK__"
+_EXIT         = "__EXIT__"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 1 — CORE LOGIC  (shared by GUI and CLI)
+# SECTION 1 — CORE LOGIC
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class FaceDetector:
@@ -55,29 +71,6 @@ class FaceDetector:
     def detect_faces(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         return self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-
-
-class GestureRecognizer:
-    def __init__(self):
-        self.gesture_model = cv2.ml.KNearest_create()
-
-    def train(self, samples, responses):
-        self.gesture_model.train(samples, cv2.ml.ROW_SAMPLE, responses)
-
-    def recognize_gesture(self, frame):
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        blur = cv2.GaussianBlur(gray, (5, 5), 0)
-        contours, _ = cv2.findContours(blur, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        for contour in contours:
-            area         = cv2.contourArea(contour)
-            x, y, w, h   = cv2.boundingRect(contour)
-            aspect_ratio = float(w) / h if h != 0 else 0
-            features     = np.array([[area, aspect_ratio]], dtype=np.float32)
-            _, results, _, _ = self.gesture_model.findNearest(features, k=5)
-            gesture_map  = {1: "Thumbs up!", 2: "Waving!", 3: "Pointing!"}
-            if results[0] in gesture_map:
-                return gesture_map[results[0]]
-        return "Unknown gesture"
 
 
 def greet_user(say=speak) -> None:
@@ -100,27 +93,6 @@ def greet_user(say=speak) -> None:
             print("No camera available, skipping face detection.")
     except Exception as e:
         print(f"Camera error: {e}")
-
-
-def detect_emotions(say=speak) -> str:
-    try:
-        user_input = take_user_input()
-        if user_input == 'None':
-            return "I couldn't understand what you said."
-        inputs  = tokenizer.encode_plus(
-            user_input, add_special_tokens=True, max_length=512,
-            return_attention_mask=True, return_tensors='pt', truncation=True
-        )
-        outputs       = bert_model(inputs['input_ids'], attention_mask=inputs['attention_mask'])
-        scores        = outputs.last_hidden_state[:, 0, :]
-        idx           = torch.argmax(scores).item()
-        emotion_index = idx if 0 <= idx < len(EMOTION_LABELS) else 2
-        emotion       = EMOTION_LABELS[emotion_index]
-        score         = int(scores[0][emotion_index].item())
-        return f"I sense that you're feeling {emotion} with a score of {score}."
-    except Exception as e:
-        print(f"Error detecting emotions: {e}")
-        return "I'm having trouble analyzing your emotions right now."
 
 
 def calculate(say=speak) -> None:
@@ -279,7 +251,8 @@ def astro(start_date, end_date, say=speak) -> str:
         say(f"Total asteroids between {start_date} and {end_date} is: {total}")
         say("Extracting data for these asteroids.")
         for body in data['near_earth_objects'].get(str(start_date), []):
-            say(f"Asteroid {body['name']} with id {body['id']} has magnitude {body['absolute_magnitude_h']}.")
+            say(f"Asteroid {body['name']} with id {body['id']} "
+                f"has magnitude {body['absolute_magnitude_h']}.")
         return f"{total} asteroids found."
     except Exception as e:
         print(f"Asteroid error: {e}")
@@ -292,21 +265,10 @@ def on_closing(say=speak) -> None:
     say("Good night sir, take care!" if hour >= 21 or hour < 6 else "Have a good day sir!")
 
 
-# ── Sentinel strings returned by process_query for multi-turn follow-ups ───────
-_AWAIT_MEMORY = "__AWAIT_MEMORY__"
-_AWAIT_STOCK  = "__AWAIT_STOCK__"
-_EXIT         = "__EXIT__"
-
-
 def process_query(query: str, say=speak, joke_state: dict = None) -> str | None:
     """
     Single command dispatcher shared by GUI and CLI.
-
-    Returns:
-      str   — response text to display / speak
-      None  — action was fire-and-forget (already handled internally)
-      _AWAIT_MEMORY / _AWAIT_STOCK — caller must collect a follow-up input
-      _EXIT — caller should shut down
+    Returns a response string, None, or one of the _AWAIT_* / _EXIT sentinels.
     """
     if joke_state is None:
         joke_state = {'told': False}
@@ -315,15 +277,15 @@ def process_query(query: str, say=speak, joke_state: dict = None) -> str | None:
 
     # ── Apps ───────────────────────────────────────────────────────────────────
     if 'open notepad' in q:
-        open_notepad();  return "Opening text editor."
+        open_notepad();    return "Opening text editor."
     if 'open command prompt' in q or 'open cmd' in q:
-        open_cmd();      return "Opening terminal."
+        open_cmd();        return "Opening terminal."
     if 'open camera' in q:
-        open_camera();   return "Opening camera."
+        open_camera();     return "Opening camera."
     if 'open calculator' in q:
         open_calculator(); return "Opening calculator."
 
-    # ── Web search ─────────────────────────────────────────────────────────────
+    # ── Web ────────────────────────────────────────────────────────────────────
     if 'ip address' in q:
         ip = find_my_ip()
         return f"Your IP address is {ip}"
@@ -350,21 +312,21 @@ def process_query(query: str, say=speak, joke_state: dict = None) -> str | None:
         search_on_google(sq)
         return f"Searching Google for '{sq}'"
 
-    # ── Date / time ────────────────────────────────────────────────────────────
+    # ── Date / Time ────────────────────────────────────────────────────────────
     if 'date' in q:
         result = f"The current date is {datetime.now().strftime('%d/%m/%Y')}"
-        say(result);  return result
+        say(result); return result
 
     if 'time' in q:
         result = f"Sir, the time is {datetime.now().strftime('%H:%M:%S')}"
-        say(result);  return result
+        say(result); return result
 
     # ── System ─────────────────────────────────────────────────────────────────
     if 'cpu' in q:
         usage   = psutil.cpu_percent()
         battery = psutil.sensors_battery()
         result  = f"CPU at {usage}%" + (f"  |  Battery at {battery.percent}%" if battery else "")
-        say(result);  return result
+        say(result); return result
 
     if 'screenshot' in q:
         screenshot()
@@ -400,23 +362,29 @@ def process_query(query: str, say=speak, joke_state: dict = None) -> str | None:
             joke_state['told'] = True
             return joke
         result = "You've already heard a joke. Would you like to hear another one?"
-        say(result);  return result
+        say(result); return result
 
-    # ── Knowledge graph ────────────────────────────────────────────────────────
+    if 'yes' in q and joke_state['told']:
+        joke_state['told'] = False
+        joke = pyjokes.get_joke()
+        say(joke)
+        return joke
+
+    # ── Knowledge ──────────────────────────────────────────────────────────────
     if 'how old am i' in q or 'my age' in q:
         age    = knowledge.get_person_age(USERNAME)
         result = f"You are {age} years old." if age else "I don't have your age information."
-        say(result);  return result
+        say(result); return result
 
     if 'favorite movie' in q:
         movie  = knowledge.get_favorite_movie(USERNAME)
         result = f"Your favorite movie is {movie}." if movie else "I don't have your favorite movie information."
-        say(result);  return result
+        say(result); return result
 
     if 'where do i live' in q or 'my location' in q:
         city   = knowledge.get_person_location(USERNAME)
         result = f"You live in {city}." if city else "I don't have your location information."
-        say(result);  return result
+        say(result); return result
 
     if 'favorite cuisine' in q:
         cuisines = knowledge.get_favorite_cuisines(USERNAME)
@@ -426,27 +394,23 @@ def process_query(query: str, say=speak, joke_state: dict = None) -> str | None:
             result = f"Your favorite cuisine is {cuisines[0]}."
         else:
             result = "I don't have your favorite cuisine information."
-        say(result);  return result
+        say(result); return result
 
     if 'favorite book' in q:
         book   = knowledge.get_favorite_book(USERNAME)
         result = (f"Your favorite book is {book[0]} by {book[1]} in the {book[2]} genre."
                   if book else "I don't have your favorite book information.")
-        say(result);  return result
+        say(result); return result
 
     if 'favorite food' in q:
         foods  = knowledge.get_favorite_food(USERNAME)
         result = ("Your favorite foods are " + ", ".join(foods)
                   if foods else "I don't have your favorite food information.")
-        say(result);  return result
+        say(result); return result
 
-    # ── AI / Emotions ──────────────────────────────────────────────────────────
-    if 'how do i feel' in q or 'my emotion' in q:
-        result = detect_emotions(say)
-        say(result);  return result
-
+    # ── Conversation ───────────────────────────────────────────────────────────
     if 'talk' in q:
-        talk_to_user(say);  return None
+        talk_to_user(say); return None
 
     # ── NASA ───────────────────────────────────────────────────────────────────
     if 'space news' in q or 'nasa news' in q:
@@ -462,7 +426,7 @@ def process_query(query: str, say=speak, joke_state: dict = None) -> str | None:
     if 'asteroid' in q:
         return astro(datetime.now().date() - timedelta(days=30), datetime.now().date(), say)
 
-    # ── Stocks (needs follow-up) ───────────────────────────────────────────────
+    # ── Stocks ─────────────────────────────────────────────────────────────────
     if 'stock recommendation' in q:
         say("What are your investing goals?")
         return _AWAIT_STOCK
@@ -478,9 +442,9 @@ def process_query(query: str, say=speak, joke_state: dict = None) -> str | None:
         return f"Note saved as {filename}." if filename else None
 
     if 'dismiss that note' in q or 'close notepad' in q:
-        close_notepad(say);  return None
+        close_notepad(say); return None
 
-    # ── Memory (needs follow-up) ───────────────────────────────────────────────
+    # ── Memory ─────────────────────────────────────────────────────────────────
     if 'remember that' in q:
         say("What should I remember sir?")
         return _AWAIT_MEMORY
@@ -490,23 +454,23 @@ def process_query(query: str, say=speak, joke_state: dict = None) -> str | None:
             with open(os.path.join(BASE_DIR, 'data.txt'), 'r') as f:
                 content = f.read()
             result = f"You told me to remember that {content}"
-            say(result);  return result
+            say(result); return result
         except FileNotFoundError:
             result = "You haven't asked me to remember anything yet."
-            say(result);  return result
+            say(result); return result
 
     # ── Misc ───────────────────────────────────────────────────────────────────
     if 'calculation' in q or 'calculate' in q:
-        calculate(say);  return None
+        calculate(say); return None
 
     if 'create file' in q:
-        create_file();  return None
+        create_file(); return None
 
     if 'add special day' in q:
-        add_special_day();  return None
+        add_special_day(); return None
 
     if 'exit' in q or 'sleep' in q or 'goodbye' in q:
-        on_closing(say);  return _EXIT
+        on_closing(say); return _EXIT
 
     result = "I'm not sure how to help with that. Could you try rephrasing?"
     say(result)
@@ -553,27 +517,8 @@ def run_cli() -> None:
 # SECTION 3 — GUI MODE
 # ═══════════════════════════════════════════════════════════════════════════════
 
-import tkinter as tk
-from tkinter import scrolledtext
-
-# ── Theme ──────────────────────────────────────────────────────────────────────
-BG        = "#020c14"
-PANEL     = "#041525"
-BORDER    = "#0d4f7c"
-ACCENT    = "#00c8ff"
-GREEN     = "#00ffaa"
-RED       = "#ff3860"
-TEXT      = "#c8e8f8"
-TEXT_DIM  = "#3a6a8a"
-
-FONT_TITLE = ("Courier", 11, "bold")
-FONT_MONO  = ("Courier", 10)
-FONT_SMALL = ("Courier", 8)
-FONT_LOG   = ("Courier", 9)
-
-
 def speak_async(text: str) -> None:
-    """Thread-safe TTS — creates a fresh engine per call to avoid tkinter loop conflict."""
+    """Thread-safe TTS — fresh engine per call avoids tkinter mainloop conflict."""
     def _speak():
         try:
             if OS == 'Windows':
@@ -659,16 +604,19 @@ class JarvisGUI:
         self._section_title(sidebar, "◈ SYSTEM STATUS")
         self.status_items = {}
         for label, color in [
-            ("VOICE ENGINE",  GREEN), ("SPEECH RECOG.", GREEN),
-            ("BERT MODEL",    GREEN), ("CAMERA",        RED),
-            ("STOCK DATA",    GREEN), ("NASA API",      GREEN),
+            ("VOICE ENGINE",  GREEN),
+            ("SPEECH RECOG.", GREEN),
+            ("CAMERA",        RED),
+            ("STOCK DATA",    GREEN),
+            ("NASA API",      GREEN),
         ]:
             row = tk.Frame(sidebar, bg=PANEL)
             row.pack(fill=tk.X, padx=12, pady=3)
             dot = tk.Canvas(row, width=8, height=8, bg=PANEL, highlightthickness=0)
             dot.create_oval(1, 1, 7, 7, fill=color, outline="")
             dot.pack(side=tk.LEFT)
-            tk.Label(row, text=f"  {label}", bg=PANEL, fg=TEXT_DIM, font=FONT_SMALL).pack(side=tk.LEFT)
+            tk.Label(row, text=f"  {label}", bg=PANEL,
+                     fg=TEXT_DIM, font=FONT_SMALL).pack(side=tk.LEFT)
             self.status_items[label] = dot
 
         tk.Frame(sidebar, bg=BORDER, height=1).pack(fill=tk.X, padx=12, pady=10)
@@ -681,7 +629,6 @@ class JarvisGUI:
             ("🌌  NASA News",    "space news"),
             ("📈  Stock Tips",   "stock recommendation"),
             ("😄  Tell a Joke",  "tell me a joke"),
-            ("🧠  My Emotion",   "how do i feel"),
             ("🗒️  Write a Note", "write a note"),
         ]:
             btn = tk.Button(
@@ -826,7 +773,6 @@ class JarvisGUI:
         self.input_var.set("")
         self.log_message("USER", text, color=GREEN)
 
-        # Multi-turn: waiting for memory content
         if self._pending_memory:
             self._pending_memory = False
             with open(os.path.join(BASE_DIR, 'data.txt'), 'w') as f:
@@ -836,7 +782,6 @@ class JarvisGUI:
             speak_async(resp)
             return
 
-        # Multi-turn: waiting for investment goals
         if self._pending_stock:
             self._pending_stock = False
             self.set_status("ANALYZING...", ACCENT)
