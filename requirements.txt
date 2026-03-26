@@ -11,13 +11,13 @@ opencv-python==4.8.1.78
 numpy==1.24.3
 
 # Natural Language Processing
-nltk==3.9.3
+nltk==3.9.4
 
 # Machine Learning
 scikit-learn==1.5.0
 
 # Web & API
-requests==2.32.4
+requests==2.33.0
 beautifulsoup4==4.11.1
 wikipedia==1.4.0
 
