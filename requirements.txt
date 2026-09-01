@@ -11,7 +11,7 @@ opencv-python==4.8.1.78
 numpy==1.24.3
 
 # Natural Language Processing
-nltk==3.10.0
+nltk==3.10.3
 
 # Machine Learning
 scikit-learn==1.5.0
@@ -41,5 +41,5 @@ pytube==15.0.0
 
 # Additional
 python-dateutil==2.8.2
-Pillow==12.2.0
+Pillow==12.3.0
 python-dotenv==1.2.2
